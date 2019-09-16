@@ -1,5 +1,7 @@
 - npm init --y to make pacakge.json
 - npm install --save-dev nodemon as dev dep
+- npm install knex -g
+- npm install knex --save
 - knex migrate:make users
 - knex migrate:latest creates the tables after you write them in migrations
   then it creates the users.db3 file

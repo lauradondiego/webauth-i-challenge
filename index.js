@@ -10,9 +10,9 @@ const Users = require("./users/users-model.js");
 
 const server = express();
 
-server.use(helmet());
+// server.use(helmet());
 server.use(express.json());
-server.use(cors());
+// server.use(corns());
 
 server.get("/", (req, res) => {
   res.send("It's alive!");
