@@ -65,19 +65,15 @@ server.post("/api/login", (req, res) => {
 });
 
 server.get("/api/users", restricted, (req, res) => {
+  // only want to give someone who is authorized to give
+  // access to the entire user list
+  // so you must verify they are logged in via "restricted fx"
+  // add username and password to headers in insomnia
   Users.find()
     .then(users => {
       res.json(users);
     })
-    .catch(err => res.send(err));
-});
-
-server.get("/hash", (req, res) => {
-  const name = req.query.name;
-
-  // hash the name
-  const hash = bcrypt.hashSync(name, 8); // use bcryptjs to hash the name
-  res.send(`the hash for ${name} is ${hash}`);
+    .catch(err => res.status(500).json(err.message));
 });
 
 const port = process.env.PORT || 5000;

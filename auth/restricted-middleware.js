@@ -10,7 +10,8 @@ const Users = require("../users/users-model");
 
 module.exports = (req, res, next) => {
   let { username, password } = req.headers;
-
+  // you can put data on the body or the headers
+console.log(username, password)
   Users.findBy({ username })
     .first()
     .then(user => {
