@@ -1,0 +1,99 @@
+const express = require("express");
+const router = express.Router();
+const server = express();
+
+const bcrypt = require("bcryptjs");
+const restricted = require("./auth/restricted-middleware.js");
+
+const session = require("express-session");
+// this below library has to come AFTER session above
+const KnexSessionStore = require("connect-session-knex")(session);
+
+const dbConnection = require("./database/dbConfig.js");
+const Users = require("./users/users-model.js");
+
+server.use(helmet());
+server.use(express.json());
+server.use(session(sessionConfig));
+// server.use(corns());
+
+const sessionConfig = {
+  name: "mycookie",
+  secret: process.env.SESSION_SECRET || "keep it secret, keep it safe",
+  cookie: {
+    maxAge: 1000 * 60 * 60, // in milliseconds
+    security: false,
+    httpOnly: true
+  },
+  resave: false,
+  saveUninitialized: true,
+  store: new KnexSessionStore({
+    knex: dbConnection,
+    createTable: true,
+    clearInterval: 1000 * 60 * 60
+  })
+};
+
+server.get("/", (req, res) => {
+  res.send("It's alive!");
+});
+
+server.get("/hash", (req, res) => {
+  const name = req.query.name;
+  // hash the name
+  const hash = bcrypt.hashSync(name, 8); // use bcryptjs to hash the name
+  res.send(`the hash for ${name} is ${hash}`);
+  // use this to test localhost:5000/hash/?name=laura
+});
+
+server.post("/api/register", (req, res) => {
+  let { username, password } = req.body;
+  const hash = bcrypt.hashSync(password, 8);
+  // the 8 is a number and the higher the number the hardesr the password
+  // is to hack. the higher the number, the SLOWER it is to generate though
+  // 8 means round. it means 2 ^ 8 power.
+  // always include in, 14 and up
+
+  Users.add({ username, password: hash })
+    .then(saved => {
+      res.status(201).json(saved);
+    })
+    .catch(error => {
+      res.status(500).json(error);
+    });
+  // use this localhost:5000/api/register and put in username and password and u get back hash
+});
+
+server.post("/api/login", (req, res) => {
+  let { username, password } = req.body;
+
+  Users.findBy({ username })
+    .first()
+    .then(user => {
+      // check password doing the below 49
+      // *add to if statement* bcrypt.compareSync(password, user.password)
+      // above takes the password and compares the hashes returns true or false
+      if (user && bcrypt.compareSync(password, user.password)) {
+        res.status(200).json({ message: `Welcome ${user.username}!` });
+      } else {
+        res.status(401).json({ message: "Invalid Credentials" });
+      }
+    })
+    .catch(error => {
+      res.status(500).json(error);
+    });
+});
+
+server.get("/api/users", restricted, (req, res) => {
+  // only want to give someone who is authorized to give
+  // access to the entire user list
+  // so you must verify they are logged in via "restricted fx"
+  // add username and password to headers in insomnia
+  Users.find()
+    .then(users => {
+      res.json(users);
+    })
+    .catch(err => res.status(500).json(err.message));
+});
+
+module.exports = router;
