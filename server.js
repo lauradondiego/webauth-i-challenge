@@ -13,7 +13,7 @@ const sessionConfig = {
   secret: process.env.SESSION_SECRET || "keep it secret, keep it safe",
   cookie: {
     maxAge: 1000 * 60 * 60, // in milliseconds
-    security: false,
+    secure: false, // only send cookies when you have a secure connection with https
     httpOnly: true
   },
   resave: false,
@@ -30,7 +30,7 @@ server.use(session(sessionConfig));
 const UsersRouter = require("./users/users-router");
 
 server.use(helmet());
-server.use(cors());
+server.use(cors()); //  when you comminucate b/w frontend & backend
 server.use(express.json());
 server.use("/api/users", UsersRouter);
 
